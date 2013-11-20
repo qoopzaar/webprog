@@ -1,4 +1,3 @@
 webprog
 =======
-
-For course Web Programming 56
+Web Programming 56
