@@ -2,7 +2,11 @@ package example.webprog.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -13,64 +17,128 @@ import javax.servlet.http.HttpServletResponse;
  * Servlet implementation class BookStoreServlet
  */
 @WebServlet("/bookStore.do")
-public class BookStoreServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+public class BookStoreServlet extends BaseServlet {
+
+	private static final long serialVersionUID = -721829521219637394L;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
 	 */
 	public BookStoreServlet() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
 	 *      response)
 	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		processRequest(request, response);
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+			IOException {
+		processMySql(request, response);
 	}
 
-	protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		PrintWriter out = response.getWriter();
-		out.println("<html>");
-		out.println("<head>");
-		out.println("<title>Book Store</title>");
-		out.println("</head>");
-		out.println("<body>");
+	protected void processMySql(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+			IOException {
+		PreparedStatement preparedStatement = null;
+		try {
+			String username = request.getParameter("username");
+			String password = request.getParameter("password");
 
-		String admin = "admin";
-		String adminPwd = "1234";
+			String sql = "select * from member where username = ? ";
+			preparedStatement = connection.prepareStatement(sql);
+			preparedStatement.setString(1, username);
 
-		String user = "user";
-		String userPwd = "5678";
+			ResultSet rs = preparedStatement.executeQuery();
+			String role = "";
+			String pwd = "";
+			if (rs.next()) {
+				role = rs.getString("role");
+				pwd = rs.getString("password");
+			}
 
-		String username = request.getParameter("username");
-		String password = request.getParameter("password");
+			if (pwd.equals(password) && role.equalsIgnoreCase("admin")) {
+				RequestDispatcher dispatcher = request.getRequestDispatcher("/bookStore/addBook.jsp");
+				dispatcher.forward(request, response);
 
-		if (admin.equalsIgnoreCase(username) && adminPwd.equals(password)) {
-			out.println("<h2> Add Book </h2>");
-			out.println("<b>ISBN: </b><input type='text' name='isbn'><BR>");
-			out.println("<b>Title: </b><input type='text' name='title'><BR>");
-			out.println("<b>Author: </b><input type='text' name='author'><BR>");
-			out.println("<b>Price: </b><input type='text' name='price'><BR>");
-			out.println("<input type='submit' value='Add'>");
-		} else if (user.equalsIgnoreCase(username) && userPwd.equals(password)) {
-			out.println("<h2> Choose Book(s) to Buy </h2>");
-			out.println("<input type='checkbox' name='book' value='JSP'>JSP<BR>");
-			out.println("<input type='checkbox' name='book' value='Servlet'>Servlet<BR>");
-			out.println("<input type='checkbox' name='book' value='HTML'>HTML<BR>");
-			out.println("<input type='checkbox' name='book' value='CSS'>CSS<BR>");
-			out.println("<input type='submit' value='Choose'>");
+			} else if (pwd.equals(password) && role.equalsIgnoreCase("user")) {
+				RequestDispatcher dispatcher = request.getRequestDispatcher("/chooseBook.do");
+				dispatcher.forward(request, response);
 
-		} else {
-			out.println("<h3> Invalid Username or Password </h3>");
-			out.println("<a href=\"bookStore\"><h4>Back to Login Page<h4></a>");
+			} else {
+				PrintWriter out = response.getWriter();
+				out.println("<html>");
+				out.println("<head>");
+				out.println("<title>Book Store</title>");
+				out.println("</head>");
+				out.println("<body>");
+				out.println("<h3> Invalid Username or Password </h3>");
+				out.println("<a href=\"bookStore\"><h4>Back to Login Page<h4></a>");
+				out.println("</body>");
+				out.println("</html>");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			PrintWriter writer = response.getWriter();
+			writer.write("Error..." + e.getMessage());
+		} finally {
+			try {
+				preparedStatement.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
-
-		out.println("</body>");
-		out.println("</html>");
-		out.close();
 	}
+
+	protected void processMongoDB(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+			IOException {
+		PreparedStatement preparedStatement = null;
+		try {
+			String username = request.getParameter("username");
+			String password = request.getParameter("password");
+
+			String sql = "select * from member where username = ? ";
+			preparedStatement = connection.prepareStatement(sql);
+			preparedStatement.setString(1, username);
+
+			ResultSet rs = preparedStatement.executeQuery();
+			String role = "";
+			String pwd = "";
+			if (rs.next()) {
+				role = rs.getString("role");
+				pwd = rs.getString("password");
+			}
+
+			if (pwd.equals(password) && role.equalsIgnoreCase("admin")) {
+				RequestDispatcher dispatcher = request.getRequestDispatcher("/bookStore/addBook.jsp");
+				dispatcher.forward(request, response);
+
+			} else if (pwd.equals(password) && role.equalsIgnoreCase("user")) {
+				RequestDispatcher dispatcher = request.getRequestDispatcher("/chooseBook.do");
+				dispatcher.forward(request, response);
+
+			} else {
+				PrintWriter out = response.getWriter();
+				out.println("<html>");
+				out.println("<head>");
+				out.println("<title>Book Store</title>");
+				out.println("</head>");
+				out.println("<body>");
+				out.println("<h3> Invalid Username or Password </h3>");
+				out.println("<a href=\"bookStore\"><h4>Back to Login Page<h4></a>");
+				out.println("</body>");
+				out.println("</html>");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			PrintWriter writer = response.getWriter();
+			writer.write("Error..." + e.getMessage());
+		} finally {
+			try {
+				preparedStatement.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 }
